@@ -1,18 +1,17 @@
-@Library('transito360-library') _ // Nome da sua Shared Library
+@Library('transito360-library') _
 
 pipeline {
     agent any
 
     parameters {
-        string(name: 'CIDADE', defaultValue: 'lem', description: 'Cidade de destino (recebido do orquestrador).')
-        string(name: 'VERSAO', defaultValue: 'develop', description: 'Branch ou tag (recebido do orquestrador).')
+        string(name: 'CIDADE', defaultValue: 'lem', description: 'Cidade de destino.')
+        string(name: 'VERSAO', defaultValue: 'develop', description: 'Branch ou tag.')
     }
 
     stages {
         stage('Checkout Monorepo') {
             steps {
                 cleanWs()
-                // O Jenkins baixa o repositório inteiro na versão especificada
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: params.VERSAO]],
@@ -26,20 +25,29 @@ pipeline {
         stage('Deploy do Serviço de Back-end') {
             steps {
                 script {
-                    // Monta o mapa de configuração para a Shared Library
-                    def config = [
-                        cidade: params.CIDADE,
-                        servico: 'backend', // Nome da pasta de deploy no servidor
-                        sshCredentialId: 'ssh-cred-id',
-                        // O ID da credencial do .env é montado dinamicamente
-                        envCredentialId: "transito360-backend-env-${params.CIDADE}"
-                    ]
+                    def envCredentialId = "transito360-backend-env-${params.CIDADE}"
+                    
+                    // --- INÍCIO DA CORREÇÃO ---
+                    // Carrega a credencial do .env da cidade específica
+                    withCredentials([file(credentialsId: envCredentialId, variable: 'ENV_FILE')]) {
+                        // Lê as propriedades do arquivo .env
+                        def envProps = readProperties file: ENV_FILE
 
-                    // Entra no diretório 'spring' (onde está este Jenkinsfile)
-                    // antes de chamar a função de deploy.
-                    dir('spring') {
-                        deployTools.deployService(config)
+                        // Monta o mapa de configuração completo
+                        def config = [
+                            cidade: params.CIDADE,
+                            servico: 'backend',
+                            sshCredentialId: 'ssh-cred-id', // Verifique se este é o ID correto
+                            envCredentialId: envCredentialId,
+                            remoteHost: envProps.REMOTE_HOST // Adiciona o host lido do arquivo
+                        ]
+
+                        // Entra no diretório do serviço antes de chamar o deploy
+                        dir('spring') {
+                            deployTools.deployService(config)
+                        }
                     }
+                    // --- FIM DA CORREÇÃO ---
                 }
             }
         }
