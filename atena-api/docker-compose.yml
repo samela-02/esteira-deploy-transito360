@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  atena-api:
+    image: atena-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # A seção 'args' foi removida, pois o Jenkins agora lida com o checkout do código.
+      # args:
+      #   GITHUB_TOKEN: ${GITHUB_TOKEN}
+    container_name: atena-api-${CIDADE_SUFFIX}
+    networks:
+      - proxy-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    env_file: .env
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      autoheal: "true"
+
+networks:
+  proxy-net:
+    external: true
