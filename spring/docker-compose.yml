@@ -1,0 +1,23 @@
+services:
+  transito360-backend:
+    image: transito360-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - APOLO_LIB_VERSION=${APOLO_LIB_VERSION:-2.0.2}
+    container_name: transito360-backend-${CIDADE_SUFFIX}
+    # A porta 8080 ser acessada pelo Reverse Proxy, n precisa expor para o host
+#    ports:
+#      - "8080:8080"
+    networks:
+      - proxy-net
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/etc/localtime:ro"
+
+networks:
+  proxy-net:
+    external: true
