@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  transito360-frontend:
+    image: transito360-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Passa o token do .env para o build-arg do Dockerfile
+        NPM_AUTH_TOKEN: ${NPM_AUTH_TOKEN}
+    container_name: transito360-frontend-${CIDADE_SUFFIX}
+    networks:
+      - proxy-net
+    restart: unless-stopped
+    env_file: .env # O entrypoint.sh usará as variáveis deste arquivo
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+
+networks:
+  proxy-net:
+    external: true

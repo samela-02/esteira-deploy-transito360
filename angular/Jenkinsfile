@@ -1,0 +1,64 @@
+@Library('transito360-library') _
+
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'CIDADE', defaultValue: 'lem', description: 'Cidade de destino.')
+        string(name: 'VERSAO', defaultValue: 'develop', description: 'Branch ou tag.')
+    }
+
+    stages {
+        stage('Checkout Monorepo') {
+            steps {
+                cleanWs()
+                // Baixa o repositório inteiro
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: params.VERSAO]],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/tivic-pdi/transito360.git',
+                        credentialsId: 'github-token'
+                    ]]
+                ])
+            }
+        }
+        stage('Deploy do Serviço de Front-end') {
+            steps {
+                script {
+                    def envCredentialId = "transito360-frontend-env-${params.CIDADE}"
+                    
+                    withCredentials([file(credentialsId: envCredentialId, variable: 'ENV_FILE')]) {
+                        def envProps = readProperties file: ENV_FILE
+                        def remoteHost = envProps.REMOTE_HOST
+
+                        if (!remoteHost) {
+                            error("ERRO: O parâmetro 'REMOTE_HOST' não foi encontrado no arquivo .env da credencial '${envCredentialId}'.")
+                        }
+
+                        def config = [
+                            cidade: params.CIDADE,
+                            servico: 'front-end',
+                            sshCredentialId: 'ssh-cred-id',
+                            envCredentialId: envCredentialId,
+                            remoteHost: remoteHost
+                        ]
+
+                        // ****** A MUDANÇA CRUCIAL ESTÁ AQUI ******
+                        // Entra no diretório do serviço de front-end antes de chamar a função.
+                        // Agora, o rsync e o docker build usarão este diretório como a raiz.
+                        dir('angular') {
+                            deployTools.deployService(config)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}
+
