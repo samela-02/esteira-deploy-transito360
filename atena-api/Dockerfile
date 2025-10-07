@@ -19,8 +19,7 @@ WORKDIR /app
 # Copia os arquivos de código-fonte
 COPY . .
 
-# Instala as dependências Python.
-# O uvicorn e outros executáveis serão instalados em /usr/local/bin/
+# Instala as dependências Python
 RUN pip install --no-cache-dir --upgrade -r requirements.txt --timeout 800
 
 # Configura o ambiente Java
@@ -29,18 +28,23 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 
 EXPOSE 8000 4040
 
-# Cria um usuário não-root para segurança
-RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
-
 # --- INÍCIO DA CORREÇÃO ---
-# Dá a propriedade da pasta da aplicação para o novo usuário.
-# Isso permite que a aplicação (rodando como 'appuser') leia arquivos como o .env,
-# que é injetado pelo docker-compose e pertence ao 'root' por padrão.
-RUN chown -R appuser:appgroup /app
+
+# 1. Cria o grupo e o usuário, mas desta vez, cria também um diretório home para ele.
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser appuser
+
+# 2. Define a variável de ambiente HOME para o novo diretório.
+#    Agora PySpark e Matplotlib saberão onde escrever seus caches.
+ENV HOME=/home/appuser
+
+# 3. Dá a propriedade da pasta da aplicação e do home para o novo usuário.
+RUN chown -R appuser:appgroup /app "$HOME"
+
 # --- FIM DA CORREÇÃO ---
 
+# Muda para o usuário não-root
 USER appuser
 
-# O comando para iniciar a aplicação agora encontrará o 'uvicorn'
+# O comando para iniciar a aplicação
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "log-config.json"]
 
