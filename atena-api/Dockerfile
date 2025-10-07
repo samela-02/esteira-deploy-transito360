@@ -51,4 +51,3 @@ RUN addgroup --system appgroup && adduser --system appuser --ingroup appgroup
 USER appuser
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "log-config.json"]
-
