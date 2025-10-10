@@ -27,7 +27,6 @@ pipeline {
                 script {
                     def envCredentialId = "transito360-backend-env-${params.CIDADE}"
                     
-                    // --- INÍCIO DA CORREÇÃO ---
                     // Carrega a credencial do .env da cidade específica
                     withCredentials([file(credentialsId: envCredentialId, variable: 'ENV_FILE')]) {
                         // Lê as propriedades do arquivo .env
@@ -37,7 +36,7 @@ pipeline {
                         def config = [
                             cidade: params.CIDADE,
                             servico: 'backend',
-                            sshCredentialId: 'ssh-cred-id', // Verifique se este é o ID correto
+                            sshCredentialId: 'ssh-cred-id', 
                             envCredentialId: envCredentialId,
                             remoteHost: envProps.REMOTE_HOST // Adiciona o host lido do arquivo
                         ]
@@ -47,7 +46,6 @@ pipeline {
                             deployTools.deployService(config)
                         }
                     }
-                    // --- FIM DA CORREÇÃO ---
                 }
             }
         }

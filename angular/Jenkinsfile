@@ -44,9 +44,8 @@ pipeline {
                             remoteHost: remoteHost
                         ]
 
-                        // ****** A MUDANÇA CRUCIAL ESTÁ AQUI ******
                         // Entra no diretório do serviço de front-end antes de chamar a função.
-                        // Agora, o rsync e o docker build usarão este diretório como a raiz.
+                        // O rsync e o docker build usam este diretório como a raiz.
                         dir('angular') {
                             deployTools.deployService(config)
                         }

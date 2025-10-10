@@ -1,4 +1,4 @@
-@Library('transito360-library') _ // Nome da sua Shared Library
+@Library('transito360-library') _ // Nome da Shared Library
 
 pipeline {
     agent any
@@ -42,7 +42,7 @@ pipeline {
                         // Monta o mapa de configuração completo para a Shared Library
                         def config = [
                             cidade: params.CIDADE,
-                            servico: 'atena-api', // Nome da pasta de deploy no servidor
+                            servico: 'atena-api', 
                             sshCredentialId: 'ssh-cred-id',
                             envCredentialId: envCredentialId,
                             remoteHost: remoteHost

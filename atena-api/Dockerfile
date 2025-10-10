@@ -28,23 +28,18 @@ ENV PATH=$JAVA_HOME/bin:$PATH
 
 EXPOSE 8000 4040
 
-# --- INÍCIO DA CORREÇÃO ---
-
-# 1. Cria o grupo e o usuário, mas desta vez, cria também um diretório home para ele.
+# 1. Cria o grupo e o usuário, cria também um diretório home para ele.
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup --home /home/appuser appuser
 
 # 2. Define a variável de ambiente HOME para o novo diretório.
-#    Agora PySpark e Matplotlib saberão onde escrever seus caches.
+#  PySpark e Matplotlib sabem onde escrever seus caches.
 ENV HOME=/home/appuser
 
 # 3. Dá a propriedade da pasta da aplicação e do home para o novo usuário.
 RUN chown -R appuser:appgroup /app "$HOME"
-
-# --- FIM DA CORREÇÃO ---
 
 # Muda para o usuário não-root
 USER appuser
 
 # O comando para iniciar a aplicação
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-config", "log-config.json"]
-

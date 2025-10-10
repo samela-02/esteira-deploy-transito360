@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  reverse-proxy:
+    image: httpd:2.4
+    container_name: apache-reverse-proxy
+    ports:
+      - "80:80"
+    networks:
+      - proxy-net
+    volumes:
+      - ./httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+      - ./cidades.conf:/usr/local/apache2/conf/extra/cidades.conf:ro
+    restart: unless-stopped
+
+networks:
+  proxy-net:
+    external: true
